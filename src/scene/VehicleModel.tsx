@@ -113,7 +113,7 @@ export const VehicleModel = forwardRef<THREE.Group[], Props>(function VehicleMod
       {wheels.map(([x, z], i) => (
         <group key={i} position={[x, WHEEL_R, z]} ref={setWheel(i)}>
           <group rotation={[0, 0, Math.PI / 2]}>
-            <mesh geometry={wheelGeo} material={tyre} castShadow />
+            <mesh geometry={wheelGeo} material={tyre} />
             <mesh geometry={rimGeo} material={rim} />
           </group>
         </group>

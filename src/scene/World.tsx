@@ -39,7 +39,7 @@ function Road({ branch }: { branch: Branch }) {
 function Tree({ x, z, s }: { x: number; z: number; s: number }) {
   return (
     <group position={[x, 0, z]} scale={s}>
-      <mesh material={trunk} position={[0, 0.5, 0]} castShadow>
+      <mesh material={trunk} position={[0, 0.5, 0]}>
         <cylinderGeometry args={[0.12, 0.16, 1, 6]} />
       </mesh>
       <mesh material={s > 1 ? leaf : leaf2} position={[0, 1.6, 0]} castShadow>

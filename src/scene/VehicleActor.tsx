@@ -8,6 +8,7 @@ import { branchById, useFleet, type Transit } from '../state/store';
 import { DIMENSIONS, VehicleModel, WHEEL_RADIUS } from './VehicleModel';
 import { dragPoint } from './dragPoint';
 import { useMounted } from './useMounted';
+import { urgentObligation } from '../data/logic';
 
 const easeInOut = (t: number) => 0.5 - Math.cos(Math.PI * Math.min(1, Math.max(0, t))) / 2;
 
@@ -30,11 +31,22 @@ export function VehicleActor({ vehicle }: { vehicle: Vehicle }) {
   const select = useFleet((s) => s.select);
   const setDragging = useFleet((s) => s.setDragging);
   const arrive = useFleet((s) => s.arrive);
+  const movementKind = useFleet((s) => (transit ? s.movements.find((m) => m.id === transit.movementId)?.kind : undefined));
   const [hovered, setHovered] = useState(false);
   const mounted = useMounted();
 
   const branch = branchById(vehicle.branchId);
-  const rest = useMemo(() => slotPose(branch, vehicle.slot), [branch, vehicle.slot]);
+  // Kiadott (slot = -1) járműnél a „pihenő” pont az útvonal vége (ott tűnik el).
+  const rest = useMemo(() => {
+    if (vehicle.slot >= 0) return slotPose(branch, vehicle.slot);
+    const last = transit?.segments[transit.segments.length - 1].curve;
+    return { position: last ? last.getPointAt(1) : new THREE.Vector3(), yaw: branch.heading };
+  }, [branch, vehicle.slot, transit]);
+  // Csak a valóban sürgős (lejárt vagy 7 napon belüli) tétel kap jelvényt, hogy a térkép ne legyen zajos.
+  const warning = useMemo(() => {
+    const o = urgentObligation(vehicle);
+    return o && (o.severity === 'overdue' || o.severity === 'urgent') ? o : undefined;
+  }, [vehicle]);
 
   // Az út szakaszainak időarányai.
   const plan = useMemo(() => {
@@ -92,12 +104,18 @@ export function VehicleActor({ vehicle }: { vehicle: Vehicle }) {
       }
       g.position.copy(target);
       yaw.current += shortestAngle(yaw.current, targetYaw) * Math.min(1, delta * 10);
+      // Kiadásnál a végén „elhalványul”, visszavételnél az elején „megjelenik”.
+      const isEnter = movementKind === 'handover-in';
+      const scale = transit.hideAtEnd ? Math.min(1, (1 - p) / 0.12) : isEnter ? Math.min(1, p / 0.08) : 1;
+      g.scale.setScalar(Math.max(0.001, scale));
     } else if (dragging?.active) {
+      g.scale.setScalar(1);
       target.set(dragPoint.x, 0, dragPoint.z);
       lift = 1.2;
       g.position.lerp(target.setY(lift), Math.min(1, delta * 14));
       yaw.current += shortestAngle(yaw.current, rest.yaw) * Math.min(1, delta * 6);
     } else {
+      g.scale.setScalar(1);
       g.position.lerp(rest.position, Math.min(1, delta * 10));
       yaw.current += shortestAngle(yaw.current, rest.yaw) * Math.min(1, delta * 8);
     }
@@ -126,6 +144,8 @@ export function VehicleActor({ vehicle }: { vehicle: Vehicle }) {
   const showLabel = hovered || selected || !!transit || !!dragging?.active;
   const ring = selected || hovered || !!transit;
 
+  if (vehicle.slot < 0 && !transit) return null;
+
   return (
     <group
       ref={group}
@@ -150,7 +170,7 @@ export function VehicleActor({ vehicle }: { vehicle: Vehicle }) {
         </mesh>
       )}
 
-      {mounted && (vehicle.status === 'service' || vehicle.expiringDoc) && (
+      {mounted && (vehicle.status === 'service' || warning) && (
         <Html position={[0, h + 0.9, 0]} center zIndexRange={[20, 0]} style={{ pointerEvents: 'none' }}>
           <div className="badges">
             {vehicle.status === 'service' && (
@@ -158,8 +178,8 @@ export function VehicleActor({ vehicle }: { vehicle: Vehicle }) {
                 🔧
               </span>
             )}
-            {vehicle.expiringDoc && (
-              <span className="badge badge-doc" title={`Lejáró: ${vehicle.expiringDoc}`}>
+            {warning && (
+              <span className="badge badge-doc" title={`${warning.label}: ${warning.daysLeft < 0 ? 'lejárt' : `${warning.daysLeft} nap`}`}>
                 !
               </span>
             )}
@@ -168,7 +188,7 @@ export function VehicleActor({ vehicle }: { vehicle: Vehicle }) {
       )}
 
       {mounted && showLabel && (
-        <Html position={[0, h + (vehicle.status === 'service' || vehicle.expiringDoc ? 1.6 : 1.0), 0]} center zIndexRange={[30, 0]} style={{ pointerEvents: 'none' }}>
+        <Html position={[0, h + (vehicle.status === 'service' || warning ? 1.6 : 1.0), 0]} center zIndexRange={[30, 0]} style={{ pointerEvents: 'none' }}>
           <div className={`plate ${transit ? 'plate-transit' : ''}`}>
             <span className="plate-hu">H</span>
             {vehicle.plate}

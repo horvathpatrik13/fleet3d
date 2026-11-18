@@ -1,7 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { allObligations } from './data/logic';
 import { FleetScene } from './scene/FleetScene';
-import { useFleet } from './state/store';
-import { DetailPanel, Onboarding, Sidebar, TableView, Toasts, TopBar } from './ui/Panels';
+import { type Section, useFleet } from './state/store';
+import { DetailPanel, MapToolbar, Onboarding, Sidebar, TableView, Toasts } from './ui/MapPanels';
+import { Damages } from './ui/modules/Damages';
+import { Deadlines } from './ui/modules/Deadlines';
+import { Handover } from './ui/modules/Handover';
+import { Invoices } from './ui/modules/Invoices';
+import { Report } from './ui/modules/Report';
+import { Today } from './ui/modules/Today';
+import { Trips } from './ui/modules/Trips';
+import { Tyres } from './ui/modules/Tyres';
 
 function hasWebGL() {
   try {
@@ -19,7 +28,7 @@ function useSimulation() {
     if (!simulate) return;
     const tick = () => {
       const { vehicles, transits, branches, requestMove } = useFleet.getState();
-      const candidates = vehicles.filter((v) => v.status !== 'retired' && !transits[v.id]);
+      const candidates = vehicles.filter((v) => v.status !== 'retired' && v.slot >= 0 && !transits[v.id]);
       if (!candidates.length) return;
       const v = candidates[Math.floor(Math.random() * candidates.length)];
       const targets = branches.filter((b) => b.id !== v.branchId);
@@ -31,8 +40,128 @@ function useSimulation() {
   }, [simulate]);
 }
 
-export function App() {
+function useNavBadges(): Partial<Record<Section, number>> {
+  const vehicles = useFleet((s) => s.vehicles);
+  const reminders = useFleet((s) => s.reminders);
+  const appointments = useFleet((s) => s.appointments);
+  const damages = useFleet((s) => s.damages);
+  const tripLogs = useFleet((s) => s.tripLogs);
+  const invoices = useFleet((s) => s.invoices);
+  const tyreJobs = useFleet((s) => s.tyreJobs);
+  return useMemo(() => {
+    const obl = allObligations(vehicles).filter((o) => o.severity !== 'ok');
+    return {
+      deadlines: obl.filter((o) => !reminders[o.key] && !appointments[o.key]).length,
+      damages: damages.filter((d) => d.status === 'recorded').length,
+      trips: tripLogs.filter((t) => t.status === 'submitted' || t.status === 'missing').length,
+      invoices: invoices.filter((i) => i.status === 'received' || i.status === 'checked').length,
+      tyres: Object.values(tyreJobs).filter((j) => j.status === 'todo').length,
+    };
+  }, [vehicles, reminders, appointments, damages, tripLogs, invoices, tyreJobs]);
+}
+
+const NAV: [Section, string, string][] = [
+  ['today', '☀️', 'Mai teendők'],
+  ['map', '🗺️', 'Flotta térkép'],
+  ['deadlines', '⏰', 'Határidők'],
+  ['handover', '🔑', 'Átadás-átvétel'],
+  ['damages', '🛠️', 'Kárügyek'],
+  ['trips', '🧾', 'Útnyilvántartás'],
+  ['tyres', '❄️', 'Gumicsere'],
+  ['invoices', '💶', 'Számlák'],
+  ['report', '📊', 'Vezetői riport'],
+];
+
+function Nav() {
+  const section = useFleet((s) => s.section);
+  const setSection = useFleet((s) => s.setSection);
+  const resetDemo = useFleet((s) => s.resetDemo);
+  const badges = useNavBadges();
+  return (
+    <nav className="nav" aria-label="Fő menü">
+      {NAV.map(([key, icon, label]) => (
+        <button key={key} className={`nav-item ${section === key ? 'is-active' : ''}`} onClick={() => setSection(key)} aria-current={section === key}>
+          <span className="nav-icon" aria-hidden>
+            {icon}
+          </span>
+          <span className="nav-label">{label}</span>
+          {!!badges[key] && <span className="nav-badge">{badges[key]}</span>}
+        </button>
+      ))}
+      <span className="spacer" />
+      <button
+        className="nav-item nav-reset"
+        onClick={() => {
+          if (confirm('Visszaállítod a mintaadatokat? A prototípusban rögzített változások elvesznek.')) resetDemo();
+        }}
+      >
+        <span className="nav-icon" aria-hidden>
+          ↺
+        </span>
+        <span className="nav-label">Mintaadatok visszaállítása</span>
+      </button>
+    </nav>
+  );
+}
+
+function TopBar() {
+  const vehicles = useFleet((s) => s.vehicles);
+  const transitCount = useFleet((s) => Object.keys(s.transits).length);
+  const kpis = [
+    { label: 'Jármű', value: vehicles.length },
+    { label: 'Telephelyen', value: vehicles.filter((v) => v.slot >= 0).length },
+    { label: 'Kiadva', value: vehicles.filter((v) => v.slot < 0).length, tone: 'out' },
+    { label: 'Úton', value: transitCount, tone: 'transit' },
+    { label: 'Szervizben', value: vehicles.filter((v) => v.status === 'service').length, tone: 'service' },
+  ];
+  return (
+    <header className="topbar">
+      <div className="brand">
+        <span className="brand-mark">◆</span> Fleet3D
+        <span className="brand-sub">Flottakezelés · prototípus</span>
+      </div>
+      <div className="kpis">
+        {kpis.map((k) => (
+          <div key={k.label} className={`kpi ${k.tone ? `kpi-${k.tone}` : ''}`}>
+            <strong>{k.value}</strong>
+            <span>{k.label}</span>
+          </div>
+        ))}
+      </div>
+    </header>
+  );
+}
+
+function MapWorkspace({ webgl, hidden }: { webgl: boolean; hidden: boolean }) {
   const view = useFleet((s) => s.view);
+  return (
+    <div className={`main ${hidden ? 'is-hidden' : ''}`}>
+      <Sidebar />
+      <div className="stage">
+        {webgl && <FleetScene paused={hidden} />}
+        {view === 'table' && <TableView />}
+        {!webgl && <div className="notice">Ez a böngésző nem támogatja a 3D nézetet, ezért táblázatos nézet látható.</div>}
+        {view === '3d' && webgl && !hidden && <Onboarding />}
+        <MapToolbar />
+      </div>
+      <DetailPanel />
+    </div>
+  );
+}
+
+const PAGES: Partial<Record<Section, () => React.ReactElement>> = {
+  today: Today,
+  deadlines: Deadlines,
+  handover: Handover,
+  damages: Damages,
+  trips: Trips,
+  tyres: Tyres,
+  invoices: Invoices,
+  report: Report,
+};
+
+export function App() {
+  const section = useFleet((s) => s.section);
   const setView = useFleet((s) => s.setView);
   const [webgl] = useState(hasWebGL);
   useSimulation();
@@ -41,20 +170,20 @@ export function App() {
     if (!webgl) setView('table');
   }, [webgl, setView]);
 
+  const PageComp = PAGES[section];
+
   return (
     <div className="app">
       <TopBar />
-      <div className="main">
-        <Sidebar />
-        <div className="stage">
-          {webgl && <FleetScene />}
-          {view === 'table' && <TableView />}
-          {!webgl && <div className="notice">Ez a böngésző nem támogatja a 3D nézetet, ezért táblázatos nézet látható.</div>}
-          {view === '3d' && webgl && <Onboarding />}
-          <Toasts />
+      <div className="shell">
+        <Nav />
+        <div className="content">
+          {/* A térkép mindig fel van csatolva: a máshonnan indított kiadás/visszavétel animációja a térképre váltáskor fut le. */}
+          <MapWorkspace webgl={webgl} hidden={section !== 'map'} />
+          {PageComp && <PageComp />}
         </div>
-        <DetailPanel />
       </div>
+      <Toasts />
     </div>
   );
 }

@@ -15,7 +15,7 @@ const H = 0.3; // a sziget magassága
 
 export function BranchIsland({ branch }: { branch: Branch }) {
   const focusBranch = useFleet((s) => s.focusBranch);
-  const count = useFleet((s) => s.vehicles.filter((v) => v.branchId === branch.id).length);
+  const count = useFleet((s) => s.vehicles.filter((v) => v.branchId === branch.id && v.slot >= 0).length);
   const gateOpen = useFleet((s) =>
     Object.values(s.transits).some((t) => {
       const m = s.movements.find((x) => x.id === t.movementId);

@@ -133,12 +133,14 @@ function Vehicles() {
   );
 }
 
-export function FleetScene() {
+/** paused: a térkép nincs a képernyőn – nem rajzolunk, a függő animációk láthatóvá váláskor indulnak. */
+export function FleetScene({ paused = false }: { paused?: boolean }) {
   const branches = useFleet((s) => s.branches);
   const select = useFleet((s) => s.select);
 
   return (
     <Canvas
+      frameloop={paused ? 'never' : 'always'}
       shadows
       dpr={[1, 2]}
       camera={{ position: [...OVERVIEW.pos], fov: 40, near: 0.5, far: 400 }}
@@ -151,7 +153,7 @@ export function FleetScene() {
         position={[30, 45, 20]}
         intensity={1.6}
         castShadow
-        shadow-mapSize={[2048, 2048]}
+        shadow-mapSize={[1536, 1536]}
         shadow-camera-left={-45}
         shadow-camera-right={45}
         shadow-camera-top={45}

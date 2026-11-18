@@ -118,6 +118,59 @@ export function buildPath(from: Branch, fromSlot: number, to: Branch, toSlot: nu
   ];
 }
 
+function parkSegment(to: Branch, toSlot: number) {
+  const b = SLOTS[toSlot];
+  const beyondX = b.x + (b.x >= 0 ? -1 : 1) * 2.4;
+  const approach = [
+    toWorld(to, 0, GATE_Z),
+    toWorld(to, 0, AISLE_Z + 2.2),
+    toWorld(to, (beyondX + b.x) / 2, AISLE_Z),
+    toWorld(to, beyondX, AISLE_Z + b.facing * 0.3),
+  ];
+  const park = new THREE.CatmullRomCurve3(
+    [
+      toWorld(to, beyondX, AISLE_Z + b.facing * 0.3),
+      toWorld(to, (beyondX + b.x) / 2 + (b.x - beyondX) * 0.3, b.z + b.facing * 2.2),
+      toWorld(to, b.x, b.z + b.facing * 0.9),
+      toWorld(to, b.x, b.z),
+    ],
+    false,
+    'centripetal',
+    0.5,
+  );
+  return { approach, park };
+}
+
+/** Kiadás: a jármű kiáll a helyéről és kihajt a kapun az út felé (a végén eltűnik). */
+export function buildExitPath(from: Branch, fromSlot: number): PathSegment[] {
+  const a = SLOTS[fromSlot];
+  const pts = [
+    toWorld(from, a.x, a.z),
+    toWorld(from, a.x, a.z + a.facing * 1.6),
+    toWorld(from, a.x * 0.6, AISLE_Z),
+    toWorld(from, 0, AISLE_Z + 2.2),
+    toWorld(from, 0, GATE_Z),
+    toWorld(from, 0, GATE_Z + 3),
+    toWorld(from, 0, GATE_Z + 6.5),
+  ];
+  return [{ curve: new THREE.CatmullRomCurve3(pts, false, 'centripetal', 0.5), reverse: false }];
+}
+
+/** Visszavétel: a jármű az útról behajt a kapun és beáll egy szabad helyre. */
+export function buildEnterPath(to: Branch, toSlot: number): PathSegment[] {
+  const { approach, park } = parkSegment(to, toSlot);
+  const drive = new THREE.CatmullRomCurve3(
+    [toWorld(to, 0, GATE_Z + 6.5), toWorld(to, 0, GATE_Z + 3), ...approach],
+    false,
+    'centripetal',
+    0.5,
+  );
+  return [
+    { curve: drive, reverse: false },
+    { curve: park, reverse: true },
+  ];
+}
+
 /** A kapu és a körforgalom közti útszakasz két végpontja (világ). */
 export function roadEnds(branch: Branch): [THREE.Vector3, THREE.Vector3] {
   const gate = toWorld(branch, 0, GATE_Z - 0.2);
