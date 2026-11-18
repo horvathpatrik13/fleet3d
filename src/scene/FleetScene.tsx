@@ -8,6 +8,7 @@ import { BranchIsland } from './BranchIsland';
 import { VehicleActor } from './VehicleActor';
 import { World } from './World';
 import { dragPoint } from './dragPoint';
+import { useDarkMode } from './useDarkMode';
 
 const OVERVIEW = { pos: [0, 70, 58] as const, target: [0, 0, 3] as const };
 const DRAG_THRESHOLD = 0.8;
@@ -135,6 +136,7 @@ function Vehicles() {
 
 /** paused: a térkép nincs a képernyőn – nem rajzolunk, a függő animációk láthatóvá váláskor indulnak. */
 export function FleetScene({ paused = false }: { paused?: boolean }) {
+  const dark = useDarkMode();
   const branches = useFleet((s) => s.branches);
   const select = useFleet((s) => s.select);
 
@@ -146,9 +148,9 @@ export function FleetScene({ paused = false }: { paused?: boolean }) {
       camera={{ position: [...OVERVIEW.pos], fov: 40, near: 0.5, far: 400 }}
       onPointerMissed={() => select(null)}
     >
-      <color attach="background" args={['#e9f0f5']} />
-      <fog attach="fog" args={['#e9f0f5', 80, 160]} />
-      <hemisphereLight args={['#ffffff', '#9fb59a', 0.9]} />
+      <color attach="background" args={[dark ? '#000000' : '#f5f5f7']} />
+      <fog attach="fog" args={[dark ? '#000000' : '#f5f5f7', 80, 160]} />
+      <hemisphereLight args={['#ffffff', dark ? '#4a5a48' : '#9fb59a', dark ? 0.7 : 0.9]} />
       <directionalLight
         position={[30, 45, 20]}
         intensity={1.6}
@@ -160,7 +162,7 @@ export function FleetScene({ paused = false }: { paused?: boolean }) {
         shadow-camera-bottom={-45}
         shadow-bias={-0.0004}
       />
-      <World branches={branches} />
+      <World branches={branches} dark={dark} />
       {branches.map((b) => (
         <BranchIsland key={b.id} branch={b} />
       ))}

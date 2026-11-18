@@ -153,7 +153,7 @@ export function Handover() {
         <Card title="Új jegyzőkönyv">
           <div className="segmented segmented-lg">
             <button
-              aria-selected={type === 'out'}
+              aria-pressed={type === 'out'}
               onClick={() => {
                 setType('out');
                 setVehicleId('');
@@ -162,7 +162,7 @@ export function Handover() {
               Kiadás kollégának
             </button>
             <button
-              aria-selected={type === 'in'}
+              aria-pressed={type === 'in'}
               onClick={() => {
                 setType('in');
                 setVehicleId('');
@@ -237,10 +237,10 @@ export function Handover() {
           {error && <p className="form-error">{error}</p>}
           <div className="modal-foot">
             <button className="btn" disabled={!vehicleId} onClick={() => submit(false)}>
-              Mentés
+              {type === 'out' ? 'Kiadás rögzítése' : 'Visszavétel rögzítése'}
             </button>
             <button className="btn btn-primary" disabled={!vehicleId} onClick={() => submit(true)}>
-              Mentés és jegyzőkönyv nyomtatása
+              {type === 'out' ? 'Kiadás és jegyzőkönyv' : 'Visszavétel és jegyzőkönyv'}
             </button>
           </div>
         </Card>

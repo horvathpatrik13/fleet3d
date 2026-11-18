@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from 'react';
 import { fmtDate } from '../data/logic';
 import type { Obligation, Vehicle } from '../data/types';
 import { branchById, useFleet } from '../state/store';
+import { Icon } from './icons';
 
 export function Page({ title, subtitle, actions, children }: { title: string; subtitle?: ReactNode; actions?: ReactNode; children: ReactNode }) {
   return (
@@ -32,7 +33,19 @@ export function Card({ title, actions, children, className = '' }: { title?: Rea
   );
 }
 
-export function Modal({ title, onClose, children, wide }: { title: string; onClose: () => void; children: ReactNode; wide?: boolean }) {
+export function Modal({
+  title,
+  onClose,
+  children,
+  wide,
+  size,
+}: {
+  title: string;
+  onClose: () => void;
+  children: ReactNode;
+  wide?: boolean;
+  size?: 'sm';
+}) {
   useEffect(() => {
     const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', k);
@@ -40,11 +53,11 @@ export function Modal({ title, onClose, children, wide }: { title: string; onClo
   }, [onClose]);
   return (
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className={`modal ${wide ? 'modal-wide' : ''}`} role="dialog" aria-label={title}>
+      <div className={`modal ${wide ? 'modal-wide' : ''} ${size === 'sm' ? 'modal-sm' : ''}`} role="dialog" aria-modal="true" aria-label={title}>
         <div className="modal-head">
           <h2>{title}</h2>
           <button className="icon-btn" aria-label="Bezárás" onClick={onClose}>
-            ✕
+            <Icon name="close" size={16} />
           </button>
         </div>
         {children}

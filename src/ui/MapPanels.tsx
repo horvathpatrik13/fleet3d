@@ -4,6 +4,7 @@ import { fmtDate, fmtKm, obligationsFor, urgentObligation } from '../data/logic'
 import { CATEGORY_LABELS, STATUS_LABELS, TYRE_LABELS, type Movement, type Vehicle } from '../data/types';
 import { branchById, freeSlot, useFleet } from '../state/store';
 import { Plate, SeverityChip } from './common';
+import { Icon } from './icons';
 
 const time = (ms: number) => new Date(ms).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
@@ -66,7 +67,7 @@ export function Sidebar() {
         <span className="swatch" style={{ background: v.color }} />
         <span className="vehicle-row-main">
           <strong>{v.plate}</strong>
-          <small>{v.assignedTo ? `👤 ${v.assignedTo}` : `${v.make} ${v.model}`}</small>
+          <small>{v.assignedTo ? `Kiadva: ${v.assignedTo}` : `${v.make} ${v.model}`}</small>
         </span>
         <StatusChip v={v} />
       </button>
@@ -170,8 +171,8 @@ export function DetailPanel() {
             {v.make} {v.model} · {CATEGORY_LABELS[v.category]} · {v.year}
           </p>
         </div>
-        <button className="icon-btn" aria-label="Bezárás" onClick={() => select(null)}>
-          ✕
+        <button className="icon-btn" aria-label="Kijelölés megszüntetése" onClick={() => select(null)}>
+          <Icon name="close" size={16} />
         </button>
       </div>
 
@@ -310,7 +311,14 @@ export function TableView() {
           {rows.map((v) => {
             const w = urgentObligation(v);
             return (
-              <tr key={v.id} className={selectedId === v.id ? 'is-selected' : ''} onClick={() => select(v.id)}>
+              <tr
+                key={v.id}
+                className={`is-clickable ${selectedId === v.id ? 'is-selected' : ''}`}
+                onClick={() => select(v.id)}
+                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), select(v.id))}
+                tabIndex={0}
+                aria-selected={selectedId === v.id}
+              >
                 <td>
                   <span className="swatch" style={{ background: v.color }} /> <Plate v={v} />
                 </td>

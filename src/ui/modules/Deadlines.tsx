@@ -87,12 +87,12 @@ export function Deadlines() {
               ['all', 'Mind'],
             ] as [Scope, string][]
           ).map(([k, l]) => (
-            <button key={k} aria-selected={scope === k} onClick={() => setScope(k)}>
+            <button key={k} aria-pressed={scope === k} onClick={() => setScope(k)}>
               {l}
             </button>
           ))}
         </div>
-        <select value={type} onChange={(e) => setType(e.target.value as ObligationType | '')}>
+        <select aria-label="Kötelezettség típusa" value={type} onChange={(e) => setType(e.target.value as ObligationType | '')}>
           <option value="">Minden típus</option>
           {Object.entries(OBLIGATION_LABELS).map(([k, l]) => (
             <option key={k} value={k}>
@@ -100,7 +100,7 @@ export function Deadlines() {
             </option>
           ))}
         </select>
-        <select value={branch} onChange={(e) => setBranch(e.target.value)}>
+        <select aria-label="Telephely" value={branch} onChange={(e) => setBranch(e.target.value)}>
           <option value="">Minden telephely</option>
           {branches.map((b) => (
             <option key={b.id} value={b.id}>

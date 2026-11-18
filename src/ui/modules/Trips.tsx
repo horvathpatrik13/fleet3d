@@ -37,7 +37,7 @@ export function Trips() {
       <div className="grid-side">
         <div className="stack">
           <div className="filters">
-            <select value={month} onChange={(e) => setMonth(e.target.value)}>
+            <select aria-label="Hónap" value={month} onChange={(e) => setMonth(e.target.value)}>
               {months.map((m) => (
                 <option key={m} value={m}>
                   {monthLabel(m)}
@@ -45,11 +45,11 @@ export function Trips() {
               ))}
             </select>
             <div className="segmented">
-              <button aria-selected={status === ''} onClick={() => setStatus('')}>
+              <button aria-pressed={status === ''} onClick={() => setStatus('')}>
                 Mind
               </button>
               {(Object.keys(TRIP_STATUS) as TripLogStatus[]).map((k) => (
-                <button key={k} aria-selected={status === k} onClick={() => setStatus(k)}>
+                <button key={k} aria-pressed={status === k} onClick={() => setStatus(k)}>
                   {TRIP_STATUS[k]} ({counts[k]})
                 </button>
               ))}
@@ -100,7 +100,7 @@ export function Trips() {
                         </td>
                         <td>
                           <button className="btn btn-sm" onClick={() => setOpen(t.id)}>
-                            {t.status === 'missing' ? 'Bekérés' : 'Megnyitás'}
+                            {t.status === 'missing' ? 'Bekérés' : 'Ellenőrzés'}
                           </button>
                         </td>
                       </tr>

@@ -11,6 +11,8 @@ import { Report } from './ui/modules/Report';
 import { Today } from './ui/modules/Today';
 import { Trips } from './ui/modules/Trips';
 import { Tyres } from './ui/modules/Tyres';
+import { Modal } from './ui/common';
+import { Icon, type IconName } from './ui/icons';
 
 function hasWebGL() {
   try {
@@ -60,16 +62,16 @@ function useNavBadges(): Partial<Record<Section, number>> {
   }, [vehicles, reminders, appointments, damages, tripLogs, invoices, tyreJobs]);
 }
 
-const NAV: [Section, string, string][] = [
-  ['today', '☀️', 'Mai teendők'],
-  ['map', '🗺️', 'Flotta térkép'],
-  ['deadlines', '⏰', 'Határidők'],
-  ['handover', '🔑', 'Átadás-átvétel'],
-  ['damages', '🛠️', 'Kárügyek'],
-  ['trips', '🧾', 'Útnyilvántartás'],
-  ['tyres', '❄️', 'Gumicsere'],
-  ['invoices', '💶', 'Számlák'],
-  ['report', '📊', 'Vezetői riport'],
+const NAV: [Section, IconName, string][] = [
+  ['today', 'today', 'Mai teendők'],
+  ['map', 'map', 'Flotta térkép'],
+  ['deadlines', 'clock', 'Határidők'],
+  ['handover', 'key', 'Átadás-átvétel'],
+  ['damages', 'wrench', 'Kárügyek'],
+  ['trips', 'route', 'Útnyilvántartás'],
+  ['tyres', 'snow', 'Gumicsere'],
+  ['invoices', 'doc', 'Számlák'],
+  ['report', 'chart', 'Vezetői riport'],
 ];
 
 function Nav() {
@@ -77,29 +79,58 @@ function Nav() {
   const setSection = useFleet((s) => s.setSection);
   const resetDemo = useFleet((s) => s.resetDemo);
   const badges = useNavBadges();
+  const [confirmReset, setConfirmReset] = useState(false);
   return (
     <nav className="nav" aria-label="Fő menü">
-      {NAV.map(([key, icon, label]) => (
-        <button key={key} className={`nav-item ${section === key ? 'is-active' : ''}`} onClick={() => setSection(key)} aria-current={section === key}>
-          <span className="nav-icon" aria-hidden>
-            {icon}
-          </span>
-          <span className="nav-label">{label}</span>
-          {!!badges[key] && <span className="nav-badge">{badges[key]}</span>}
-        </button>
-      ))}
+      {NAV.map(([key, icon, label]) => {
+        const count = badges[key];
+        return (
+          <button
+            key={key}
+            className={`nav-item ${section === key ? 'is-active' : ''}`}
+            onClick={() => setSection(key)}
+            aria-current={section === key ? 'page' : undefined}
+            aria-label={count ? `${label}, ${count} teendő` : label}
+            title={label}
+          >
+            <span className="nav-icon">
+              <Icon name={icon} />
+            </span>
+            <span className="nav-label">{label}</span>
+            {!!count && (
+              <span className="nav-badge" aria-hidden="true">
+                {count}
+              </span>
+            )}
+          </button>
+        );
+      })}
       <span className="spacer" />
-      <button
-        className="nav-item nav-reset"
-        onClick={() => {
-          if (confirm('Visszaállítod a mintaadatokat? A prototípusban rögzített változások elvesznek.')) resetDemo();
-        }}
-      >
-        <span className="nav-icon" aria-hidden>
-          ↺
+      <button className="nav-item nav-reset" onClick={() => setConfirmReset(true)} title="Mintaadatok visszaállítása">
+        <span className="nav-icon">
+          <Icon name="reset" size={18} />
         </span>
         <span className="nav-label">Mintaadatok visszaállítása</span>
       </button>
+      {confirmReset && (
+        <Modal title="Visszaállítod a mintaadatokat?" onClose={() => setConfirmReset(false)} size="sm">
+          <p className="hint">A prototípusban rögzített minden változás (kiadások, kárügyek, számlák, emlékeztetők) elvész. Ez nem vonható vissza.</p>
+          <div className="modal-foot">
+            <button className="btn" onClick={() => setConfirmReset(false)} autoFocus>
+              Mégse
+            </button>
+            <button
+              className="btn btn-danger"
+              onClick={() => {
+                resetDemo();
+                setConfirmReset(false);
+              }}
+            >
+              Visszaállítás
+            </button>
+          </div>
+        </Modal>
+      )}
     </nav>
   );
 }

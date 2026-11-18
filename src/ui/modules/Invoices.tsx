@@ -45,11 +45,11 @@ export function Invoices() {
     >
       <div className="filters">
         <div className="segmented">
-          <button aria-selected={filter === 'open'} onClick={() => setFilter('open')}>
+          <button aria-pressed={filter === 'open'} onClick={() => setFilter('open')}>
             Teendő
           </button>
           {(Object.keys(INVOICE_STATUS) as InvoiceStatus[]).map((k) => (
-            <button key={k} aria-selected={filter === k} onClick={() => setFilter(k)}>
+            <button key={k} aria-pressed={filter === k} onClick={() => setFilter(k)}>
               {INVOICE_STATUS[k]}
             </button>
           ))}

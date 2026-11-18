@@ -50,7 +50,7 @@ function Tree({ x, z, s }: { x: number; z: number; s: number }) {
 }
 
 /** Talaj, körforgalom, utak, díszfák. */
-export function World({ branches }: { branches: Branch[] }) {
+export function World({ branches, dark = false }: { branches: Branch[]; dark?: boolean }) {
   const trees = useMemo(() => {
     // Determinisztikus „véletlen”, hogy minden betöltésnél ugyanúgy álljanak.
     let seed = 7;
@@ -86,7 +86,7 @@ export function World({ branches }: { branches: Branch[] }) {
     <group>
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <circleGeometry args={[60, 64]} />
-        <meshStandardMaterial color="#cfe3c7" roughness={1} />
+        <meshStandardMaterial color={dark ? '#26332a' : '#cfe3c7'} roughness={1} />
       </mesh>
 
       {/* körforgalom */}

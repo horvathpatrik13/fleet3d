@@ -52,7 +52,14 @@ export function Tyres() {
     >
       <Card>
         <div className="campaign">
-          <div className="progress" aria-label="Haladás">
+          <div
+            className="progress"
+            role="progressbar"
+            aria-label="Gumicsere-kampány: kész"
+            aria-valuemin={0}
+            aria-valuemax={inCampaign.length}
+            aria-valuenow={done}
+          >
             <span className="progress-done" style={{ width: `${(done / inCampaign.length) * 100}%` }} />
             <span className="progress-sched" style={{ width: `${(scheduled / inCampaign.length) * 100}%` }} />
           </div>
@@ -117,7 +124,7 @@ export function Tyres() {
                           {v.assignedTo && (
                             <>
                               <br />
-                              <small className="muted">👤 {v.assignedTo}</small>
+                              <small className="muted">Kiadva: {v.assignedTo}</small>
                             </>
                           )}
                         </td>
@@ -127,6 +134,7 @@ export function Tyres() {
                           ) : (
                             <span className="inline-inputs">
                               <input
+                                aria-label={`Gumicsere dátuma – ${v.plate}`}
                                 type="date"
                                 value={j?.date ?? ''}
                                 min={todayISO()}
@@ -140,6 +148,7 @@ export function Tyres() {
                                 }
                               />
                               <input
+                                aria-label={`Gumicsere időpontja – ${v.plate}`}
                                 type="time"
                                 value={j?.time ?? ''}
                                 disabled={!j?.date}
@@ -151,7 +160,7 @@ export function Tyres() {
                         <td>
                           {st === 'scheduled' && (
                             <button className="btn btn-sm" onClick={() => completeTyre(v.id)}>
-                              Kész
+                              Kicserélve
                             </button>
                           )}
                           {st === 'todo' && (

@@ -47,6 +47,13 @@ Ezután nyisd meg a kiírt címet (általában `http://localhost:5173`).
 npm run build
 ```
 
+## Felület és akadálymentesség
+
+- **Design tokenek** (`src/styles.css`): egy kiemelőszín (Action Blue), súlylétra 400/600/700, árnyék nélküli kezelőfelület (a mélységet felületváltás és 1 px hajszálvonal adja), pill alakú gombok, kötött térköz- és sarokkerekítés-skála, egységes vonalikonok (`src/ui/icons.tsx`).
+- **Világos és sötét mód** a rendszerbeállítás szerint (a 3D jelenet háttere is), plusz magas kontraszt és csökkentett áttetszőség esetén egyszerűsített megjelenés.
+- **Kontraszt:** minden szövegszín legalább 4,5:1 a saját hátterén; a tokeneknél megjegyzésben szerepel az érték. Az axe-core WCAG 2 AA ellenőrzése mind a kilenc oldalon, mindkét módban hiba nélkül fut le.
+- Látható fókuszgyűrű mindenen, billentyűzettel kezelhető táblázatsorok, címkézett mezők, saját megerősítő ablak a böngésző natív `confirm` ablaka helyett.
+
 ## Technológia
 
 | Réteg | Eszköz |

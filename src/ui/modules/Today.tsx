@@ -7,6 +7,7 @@ import { Card, Kpi, Page, Plate, SeverityChip } from '../common';
 interface Todo {
   id: string;
   section: Section;
+  action: string;
   text: React.ReactNode;
   meta?: React.ReactNode;
   weight: number;
@@ -26,10 +27,11 @@ export function Today() {
       todos.push({
         id: o.key,
         section: 'deadlines',
+        action: 'Emlékeztető',
         weight: o.severity === 'overdue' ? 0 : o.severity === 'urgent' ? 1 : 3,
         text: (
           <>
-            <Plate v={vehicle(o.vehicleId)} /> {o.label}: emlékeztető vagy időpont kell
+            <Plate v={vehicle(o.vehicleId)} /> {o.label} – emlékeztető vagy időpont kell
           </>
         ),
         meta: <SeverityChip o={o} />,
@@ -43,6 +45,7 @@ export function Today() {
       todos.push({
         id: t.id,
         section: 'trips',
+        action: 'Ellenőrzés',
         weight: 2,
         text: (
           <>
@@ -58,6 +61,7 @@ export function Today() {
       todos.push({
         id: t.id,
         section: 'trips',
+        action: 'Bekérés',
         weight: 2,
         text: (
           <>
@@ -74,6 +78,7 @@ export function Today() {
       todos.push({
         id: i.id,
         section: 'invoices',
+        action: i.status === 'received' ? 'Ellenőrzés' : 'Továbbítás',
         weight: daysBetween(today, i.dueDate) <= 3 ? 1 : 3,
         text: (
           <>
@@ -93,6 +98,7 @@ export function Today() {
       todos.push({
         id: d.id,
         section: 'damages',
+        action: 'Bejelentés',
         weight: 1,
         text: (
           <>
@@ -127,7 +133,7 @@ export function Today() {
       <div className="grid-2">
         <Card title={`Teendőlista (${todos.length})`}>
           {todos.length === 0 ? (
-            <p className="hint">Minden kész. 🎉</p>
+            <p className="hint">Nincs nyitott teendő.</p>
           ) : (
             <ul className="todo-list">
               {todos.slice(0, 18).map((t) => (
@@ -135,7 +141,7 @@ export function Today() {
                   <span className="todo-text">{t.text}</span>
                   {t.meta}
                   <button className="btn btn-sm" onClick={() => s.setSection(t.section)}>
-                    Megnyitás
+                    {t.action}
                   </button>
                 </li>
               ))}
